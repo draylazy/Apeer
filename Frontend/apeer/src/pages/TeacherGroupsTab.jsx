@@ -116,6 +116,20 @@ function TeacherGroupsTab({ groups, students, isLoading, fetchGroups, showToast 
         (s.idNumber && s.idNumber.toLowerCase().includes(studentSearchTerm.toLowerCase()))
     );
 
+    const getAssignedStudentIds = () => {
+        const assignedIds = new Set();
+        groups.forEach(group => {
+            if (group.id !== editingGroupId) {
+                if (group.members) {
+                    group.members.forEach(m => assignedIds.add(m.id));
+                }
+            }
+        });
+        return assignedIds;
+    };
+
+    const assignedStudentIds = getAssignedStudentIds();
+
     return (
         <div className="tab-content">
             <div className="flex-header">
@@ -165,25 +179,29 @@ function TeacherGroupsTab({ groups, students, isLoading, fetchGroups, showToast 
                         </div>
                         <div className="students-list-container" style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #dcdcdc', borderRadius: '6px', padding: '10px' }}>
                             {filteredStudents.length === 0 ? <p style={{ fontSize: '0.9rem', color: '#666' }}>No students match your search.</p> : (
-                                filteredStudents.map(student => (
-                                    <div key={student.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '5px 0', borderBottom: '1px solid #f0f0f0' }}>
-                                        <input
-                                            type="checkbox"
-                                            id={`student-${student.id}`}
-                                            checked={selectedStudentIds.includes(student.id)}
-                                            onChange={(e) => {
-                                                if (e.target.checked) {
-                                                    setSelectedStudentIds([...selectedStudentIds, student.id]);
-                                                } else {
-                                                    setSelectedStudentIds(selectedStudentIds.filter(id => id !== student.id));
-                                                }
-                                            }}
-                                        />
-                                        <label htmlFor={`student-${student.id}`} style={{ margin: 0, fontWeight: 'normal', cursor: 'pointer' }}>
-                                            {student.firstName} {student.lastName} ({student.idNumber})
-                                        </label>
-                                    </div>
-                                ))
+                                filteredStudents.map(student => {
+                                    const isAssigned = assignedStudentIds.has(student.id);
+                                    return (
+                                        <div key={student.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '5px 0', borderBottom: '1px solid #f0f0f0', opacity: isAssigned ? 0.6 : 1 }}>
+                                            <input
+                                                type="checkbox"
+                                                id={`student-${student.id}`}
+                                                checked={selectedStudentIds.includes(student.id)}
+                                                disabled={isAssigned}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setSelectedStudentIds([...selectedStudentIds, student.id]);
+                                                    } else {
+                                                        setSelectedStudentIds(selectedStudentIds.filter(id => id !== student.id));
+                                                    }
+                                                }}
+                                            />
+                                            <label htmlFor={`student-${student.id}`} style={{ margin: 0, fontWeight: 'normal', cursor: isAssigned ? 'not-allowed' : 'pointer' }}>
+                                                {student.firstName} {student.lastName} ({student.idNumber}) {isAssigned && <span style={{ color: '#d32f2f', fontSize: '0.85em', marginLeft: '5px' }}>(Already in a group)</span>}
+                                            </label>
+                                        </div>
+                                    );
+                                })
                             )}
                         </div>
                         <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '5px' }}>{selectedStudentIds.length} students selected.</p>

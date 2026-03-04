@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import './TeacherDashboard.css';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 import TeacherProfileTab from './TeacherProfileTab';
 import TeacherStudentsTab from './TeacherStudentsTab';
@@ -27,6 +28,7 @@ function TeacherDashboard({ user, onLogout }) {
 
     // State for Toast Notifications
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
     const showToast = (message, type = 'success') => {
         setToast({ show: true, message, type });
@@ -134,7 +136,7 @@ function TeacherDashboard({ user, onLogout }) {
                     </button>
                 </nav>
                 <div className="sidebar-footer">
-                    <button onClick={onLogout} className="action-button secondary-button full-width logout-sidebar-btn">
+                    <button onClick={() => setShowLogoutConfirm(true)} className="action-button secondary-button full-width logout-sidebar-btn">
                         Log Out
                     </button>
                 </div>
@@ -155,6 +157,18 @@ function TeacherDashboard({ user, onLogout }) {
                     {renderContent()}
                 </div>
             </main>
+
+            <ConfirmationModal
+                isOpen={showLogoutConfirm}
+                title="Log Out"
+                message="Are you sure you want to log out?"
+                onConfirm={() => {
+                    setShowLogoutConfirm(false);
+                    onLogout();
+                }}
+                onCancel={() => setShowLogoutConfirm(false)}
+                isDestructive={false}
+            />
         </div>
     );
 }

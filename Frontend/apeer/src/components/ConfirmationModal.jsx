@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 function ConfirmationModal({ isOpen, title, message, onConfirm, onCancel, confirmText = "Confirm", cancelText = "Cancel", isDestructive = false }) {
+    const [isHovered, setIsHovered] = useState(false);
+
     if (!isOpen) return null;
 
     return (
@@ -25,7 +27,18 @@ function ConfirmationModal({ isOpen, title, message, onConfirm, onCancel, confir
                     )}
                     <button
                         onClick={onConfirm}
-                        style={{ padding: '8px 16px', border: 'none', borderRadius: '6px', background: isDestructive ? '#d32f2f' : '#2e7d32', color: 'white', cursor: 'pointer', fontWeight: '500' }}
+                        onMouseEnter={() => setIsHovered(true)}
+                        onMouseLeave={() => setIsHovered(false)}
+                        style={{
+                            padding: '8px 16px',
+                            border: 'none',
+                            borderRadius: '6px',
+                            background: isHovered ? '#d32f2f' : '#111',
+                            color: 'white',
+                            cursor: 'pointer',
+                            fontWeight: '500',
+                            transition: 'background-color 0.2s ease'
+                        }}
                     >
                         {confirmText}
                     </button>

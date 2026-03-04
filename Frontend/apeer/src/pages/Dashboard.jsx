@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import './Dashboard.css';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 function Dashboard({ user, onLogout }) {
     const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'evaluate', 'results'
@@ -13,6 +14,7 @@ function Dashboard({ user, onLogout }) {
 
     // State for Toast Notifications
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
     const showToast = (message, type = 'success') => {
         setToast({ show: true, message, type });
@@ -270,7 +272,7 @@ function Dashboard({ user, onLogout }) {
                     </div>
                     <div className="user-menu">
                         <span className="welcome-text">Welcome, <strong>{user?.firstName} {user?.lastName}</strong></span>
-                        <button onClick={onLogout} className="logout-button">Log Out</button>
+                        <button onClick={() => setShowLogoutConfirm(true)} className="logout-button">Log Out</button>
                     </div>
                 </div>
             </header>
@@ -317,6 +319,18 @@ function Dashboard({ user, onLogout }) {
                     </div>
                 )}
             </main>
+
+            <ConfirmationModal
+                isOpen={showLogoutConfirm}
+                title="Log Out"
+                message="Are you sure you want to log out?"
+                onConfirm={() => {
+                    setShowLogoutConfirm(false);
+                    onLogout();
+                }}
+                onCancel={() => setShowLogoutConfirm(false)}
+                isDestructive={false}
+            />
         </div>
     )
 }
