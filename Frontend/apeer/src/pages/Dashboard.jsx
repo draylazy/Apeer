@@ -11,6 +11,7 @@ function Dashboard({ user, onLogout }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedForm, setSelectedForm] = useState(null);
     const [evaluationScores, setEvaluationScores] = useState({});
+    const [showExitConfirm, setShowExitConfirm] = useState(false);
 
     // State for Toast Notifications
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
@@ -114,6 +115,7 @@ function Dashboard({ user, onLogout }) {
         if (!selectedForm) {
             return (
                 <div className="forms-list">
+                    <button className="back-button text-button mb-4" onClick={() => setActiveTab('overview')}>← Back to Home</button>
                     <h3>Available Evaluations</h3>
                     {forms.length === 0 ? <p>No evaluations available.</p> : (
                         forms.map(form => {
@@ -166,7 +168,14 @@ function Dashboard({ user, onLogout }) {
 
         return (
             <div className="evaluation-matrix-container">
-                <button className="back-button text-button" onClick={() => setSelectedForm(null)}>← Back to Forms</button>
+                <button className="back-button text-button" onClick={() => {
+                    const hasScores = Object.keys(evaluationScores).length > 0;
+                    if (hasScores) {
+                        setShowExitConfirm(true);
+                    } else {
+                        setSelectedForm(null);
+                    }
+                }}>← Back to Forms</button>
                 <h2 style={{ marginTop: '20px', marginBottom: '30px' }}>{selectedForm.title}</h2>
                 <div className="matrix-list">
                     {criteriaList.map((criteria, index) => (
@@ -330,6 +339,21 @@ function Dashboard({ user, onLogout }) {
                 }}
                 onCancel={() => setShowLogoutConfirm(false)}
                 isDestructive={false}
+            />
+
+            <ConfirmationModal
+                isOpen={showExitConfirm}
+                title="Exit Form"
+                message="Are you sure you want to exit? Any unsaved progress will be lost."
+                onConfirm={() => {
+                    setShowExitConfirm(false);
+                    setSelectedForm(null);
+                    setEvaluationScores({});
+                }}
+                onCancel={() => setShowExitConfirm(false)}
+                confirmText="Exit Without Saving"
+                cancelText="Continue Evaluating"
+                isDestructive={true}
             />
         </div>
     )

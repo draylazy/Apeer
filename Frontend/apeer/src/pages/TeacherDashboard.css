@@ -460,15 +460,26 @@ td {
 }
 
 .minimal-date-input {
-    border: none;
-    padding: 8px 12px;
-    border-radius: 6px;
-    background: #fff;
+    border: 1px solid #e0e0e0;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: #ffffff;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
     outline: none;
     color: #333;
     font-family: inherit;
+    font-size: 14px;
     cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.minimal-date-input:focus {
+    border-color: #8b1a1a;
+    box-shadow: 0 0 0 2px rgba(139, 26, 26, 0.1);
+}
+
+.minimal-date-input:hover {
+    border-color: #bfa1a1;
 }
 
 .minimal-header {
