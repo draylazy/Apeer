@@ -1,6 +1,6 @@
 <h1>Self and Peer Evaluation System</h1>
 
-The Adviser Evaluation System is a web-based platform that helps teachers manage classes, create teams, and collect adviser evaluations more easily. Instead of using paper or spreadsheets, the system centralizes everything and provides organized summaries and reports.
+The Self and Peer Evaluation System is a dynamic web-based platform designed to automate the classroom feedback process. It eliminates the hassle of manual spreadsheets by allowing educators to easily manage classes, organize teams, and collect assessments in one centralized location. At the same time, it empowers students to seamlessly submit self-reflections and peer reviews. The system instantly transforms raw input into structured summaries and progress reports, providing a clear window into team dynamics and individual contributions.
 
 <h1>🛠 Tech Stack</h1>
 
