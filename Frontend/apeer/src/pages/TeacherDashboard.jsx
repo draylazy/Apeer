@@ -101,9 +101,11 @@ function TeacherDashboard({ user, onLogout }) {
     return (
         <div className="teacher-dashboard-container">
             <aside className="sidebar">
-                <div className="sidebar-header">
-                    <div className="sidebar-logo">SPES</div>
-                    <h2>Dashboard</h2>
+                <div className="sidebar-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', padding: '20px 0' }}>
+                    <div className="sidebar-logo" style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                        <img src="/logo.png" alt="SPES Logo" style={{ width: '100px', height: 'auto', backgroundColor: '#fff', padding: '5px', borderRadius: '10px' }} />
+                    </div>
+                    <h2 style={{ textAlign: 'center', margin: 0 }}>Dashboard</h2>
                 </div>
                 <nav className="sidebar-nav">
                     {toast.show && (

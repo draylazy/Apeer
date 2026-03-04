@@ -16,4 +16,6 @@ public interface EvaluationResponseRepository extends JpaRepository<EvaluationRe
     List<EvaluationResponse> findByEvaluateeId(Long evaluateeId);
 
     List<EvaluationResponse> findByEvaluatorId(Long evaluatorId);
+
+    boolean existsByEvaluatorIdAndFormId(Long evaluatorId, Long formId);
 }

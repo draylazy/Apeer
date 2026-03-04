@@ -121,6 +121,57 @@ public class TeacherController {
         return ResponseEntity.ok(groupRepository.save(group));
     }
 
+    @PutMapping("/groups/{id}")
+    public ResponseEntity<?> updateGroup(@PathVariable Long id, @RequestBody Map<String, Object> request) {
+        StudentGroup group = groupRepository.findById(id).orElse(null);
+        if (group == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (request.containsKey("name")) {
+            String name = (String) request.get("name");
+            if (name != null && !name.trim().isEmpty()) {
+                // Check if name is taken by another group
+                StudentGroup existing = groupRepository.findByName(name).orElse(null);
+                if (existing != null && !existing.getId().equals(id)) {
+                    return ResponseEntity.badRequest().body(Map.of("message", "Group name already exists"));
+                }
+                group.setName(name);
+            }
+        }
+
+        // Handle student assignments
+        if (request.containsKey("memberIds") && request.get("memberIds") instanceof List) {
+            List<?> memberIdsRaw = (List<?>) request.get("memberIds");
+            List<Long> memberIds = new java.util.ArrayList<>();
+
+            for (Object idObj : memberIdsRaw) {
+                if (idObj instanceof Number) {
+                    memberIds.add(((Number) idObj).longValue());
+                } else if (idObj instanceof String) {
+                    try {
+                        memberIds.add(Long.parseLong((String) idObj));
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+            }
+
+            List<User> selectedMembers = userRepository.findAllById(memberIds);
+            group.setMembers(selectedMembers);
+        }
+
+        return ResponseEntity.ok(groupRepository.save(group));
+    }
+
+    @DeleteMapping("/groups/{id}")
+    public ResponseEntity<?> deleteGroup(@PathVariable Long id) {
+        if (!groupRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        groupRepository.deleteById(id);
+        return ResponseEntity.ok(Map.of("message", "Group deleted successfully"));
+    }
+
     // --- Forms ---
     @GetMapping("/forms")
     public ResponseEntity<List<EvaluationForm>> getAllForms() {

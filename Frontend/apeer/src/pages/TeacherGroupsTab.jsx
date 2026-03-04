@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 function TeacherGroupsTab({ groups, students, isLoading, fetchGroups, showToast }) {
     // State for Group Creation Modal & Search
@@ -7,31 +8,73 @@ function TeacherGroupsTab({ groups, students, isLoading, fetchGroups, showToast 
     const [selectedStudentIds, setSelectedStudentIds] = useState([]);
     const [newGroupName, setNewGroupName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+    const [editingGroupId, setEditingGroupId] = useState(null); // tracking if we are editing an existing group
+    const [studentSearchTerm, setStudentSearchTerm] = useState('');
 
-    const handleCreateGroup = async () => {
+    // Custom Confirmation Modal State
+    const [confirmState, setConfirmState] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: null,
+        isDestructive: false
+    });
+
+    const requestConfirm = (title, message, onConfirm, isDestructive = false) => {
+        setConfirmState({
+            isOpen: true,
+            title,
+            message,
+            onConfirm: () => {
+                setConfirmState(prev => ({ ...prev, isOpen: false }));
+                onConfirm();
+            },
+            isDestructive
+        });
+    };
+
+    const handleOpenEditModal = (group) => {
+        setNewGroupName(group.name);
+        setSelectedStudentIds(group.members ? group.members.map(m => m.id) : []);
+        setEditingGroupId(group.id);
+        setStudentSearchTerm('');
+        setIsCreateGroupModalOpen(true);
+    };
+
+    const handleCreateOrUpdateGroup = async () => {
         if (!newGroupName) {
             showToast('Group name is required.', 'error');
             return;
         }
         setIsSaving(true);
+
         try {
-            const res = await fetch('http://localhost:8080/api/teacher/groups', {
-                method: 'POST',
+            const isEditing = editingGroupId !== null;
+            const url = isEditing
+                ? `http://localhost:8080/api/teacher/groups/${editingGroupId}`
+                : 'http://localhost:8080/api/teacher/groups';
+            const method = isEditing ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: newGroupName,
                     memberIds: selectedStudentIds
                 })
             });
+
             if (res.ok) {
                 setNewGroupName('');
                 setSelectedStudentIds([]);
+                setEditingGroupId(null);
+                setStudentSearchTerm('');
                 setIsCreateGroupModalOpen(false);
                 fetchGroups();
-                showToast('Group created successfully!', 'success');
+                showToast(`Group ${isEditing ? 'updated' : 'created'} successfully!`, 'success');
             } else {
                 const data = await res.json();
-                showToast(data.message || 'Failed to create group', 'error');
+                showToast(data.message || `Failed to ${isEditing ? 'update' : 'create'} group`, 'error');
             }
         } catch (err) {
             console.error(err);
@@ -41,7 +84,37 @@ function TeacherGroupsTab({ groups, students, isLoading, fetchGroups, showToast 
         }
     };
 
+    const handleDeleteGroup = async (groupId) => {
+        requestConfirm(
+            "Delete Group?",
+            "Are you sure you want to delete this group? The students will remain in the system.",
+            async () => {
+                try {
+                    const res = await fetch(`http://localhost:8080/api/teacher/groups/${groupId}`, {
+                        method: 'DELETE'
+                    });
+                    if (res.ok) {
+                        fetchGroups();
+                        showToast('Group deleted successfully.', 'success');
+                    } else {
+                        showToast('Failed to delete group.', 'error');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToast('Failed to connect to server.', 'error');
+                }
+            },
+            true // isDestructive
+        );
+    };
+
     const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(groupSearchTerm.toLowerCase()));
+
+    const filteredStudents = students.filter(s =>
+        (s.firstName && s.firstName.toLowerCase().includes(studentSearchTerm.toLowerCase())) ||
+        (s.lastName && s.lastName.toLowerCase().includes(studentSearchTerm.toLowerCase())) ||
+        (s.idNumber && s.idNumber.toLowerCase().includes(studentSearchTerm.toLowerCase()))
+    );
 
     return (
         <div className="tab-content">
@@ -58,15 +131,17 @@ function TeacherGroupsTab({ groups, students, isLoading, fetchGroups, showToast 
                     <button className="action-button" onClick={() => {
                         setNewGroupName('');
                         setSelectedStudentIds([]);
+                        setEditingGroupId(null);
+                        setStudentSearchTerm('');
                         setIsCreateGroupModalOpen(true);
                     }}>Create Group</button>
                 </div>
             </div>
 
-            {/* Create Group Modal */}
+            {/* Create/Edit Group Modal */}
             {isCreateGroupModalOpen && (
                 <div className="form-builder-card" style={{ marginBottom: '20px' }}>
-                    <h3>Create New Group</h3>
+                    <h3>{editingGroupId ? 'Edit Group' : 'Create New Group'}</h3>
                     <div className="input-group" style={{ marginTop: '15px' }}>
                         <label>Group Name</label>
                         <input
@@ -78,10 +153,19 @@ function TeacherGroupsTab({ groups, students, isLoading, fetchGroups, showToast 
                     </div>
 
                     <div className="input-group" style={{ marginTop: '15px' }}>
-                        <label>Assign Students</label>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '8px' }}>
+                            <label style={{ margin: 0 }}>Assign Students</label>
+                            <input
+                                type="text"
+                                placeholder="Search students by name or ID..."
+                                value={studentSearchTerm}
+                                onChange={(e) => setStudentSearchTerm(e.target.value)}
+                                style={{ padding: '6px 10px', fontSize: '0.85rem', width: '250px', border: '1px solid #dcdcdc', borderRadius: '4px' }}
+                            />
+                        </div>
                         <div className="students-list-container" style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #dcdcdc', borderRadius: '6px', padding: '10px' }}>
-                            {students.length === 0 ? <p style={{ fontSize: '0.9rem', color: '#666' }}>No students available.</p> : (
-                                students.map(student => (
+                            {filteredStudents.length === 0 ? <p style={{ fontSize: '0.9rem', color: '#666' }}>No students match your search.</p> : (
+                                filteredStudents.map(student => (
                                     <div key={student.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '5px 0', borderBottom: '1px solid #f0f0f0' }}>
                                         <input
                                             type="checkbox"
@@ -107,7 +191,9 @@ function TeacherGroupsTab({ groups, students, isLoading, fetchGroups, showToast 
 
                     <div style={{ display: 'flex', gap: '10px', marginTop: '20px', justifyContent: 'flex-end' }}>
                         <button className="text-button" onClick={() => setIsCreateGroupModalOpen(false)}>Cancel</button>
-                        <button className="action-button" disabled={isSaving} onClick={handleCreateGroup}>Save Group</button>
+                        <button className="action-button" disabled={isSaving} onClick={handleCreateOrUpdateGroup}>
+                            {isSaving ? 'Saving...' : (editingGroupId ? 'Update Group' : 'Save Group')}
+                        </button>
                     </div>
                 </div>
             )}
@@ -133,11 +219,23 @@ function TeacherGroupsTab({ groups, students, isLoading, fetchGroups, showToast 
                                     <p style={{ color: '#999', fontStyle: 'italic', borderLeft: 'none', paddingLeft: 0 }}>No members yet</p>
                                 )}
                             </div>
-                            <button className="text-button">Edit Group</button>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #eee', paddingTop: '15px', marginTop: '10px' }}>
+                                <button className="text-button" onClick={() => handleOpenEditModal(group)}>Edit Group</button>
+                                <button className="text-button" style={{ color: '#d32f2f' }} onClick={() => handleDeleteGroup(group.id)}>Delete</button>
+                            </div>
                         </div>
                     ))
                 )}
             </div>
+
+            <ConfirmationModal
+                isOpen={confirmState.isOpen}
+                title={confirmState.title}
+                message={confirmState.message}
+                onConfirm={confirmState.onConfirm}
+                onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                isDestructive={confirmState.isDestructive}
+            />
         </div>
     );
 }

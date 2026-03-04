@@ -92,7 +92,7 @@ function TeacherFormsTab({ forms, fetchForms, showToast }) {
             const payload = {
                 title: formTitle,
                 description: formDescription,
-                deadline: formDeadline ? new Date(formDeadline).toISOString() : null,
+                deadline: formDeadline ? formDeadline + ':00' : null,
                 questions: formQuestions
             };
             const res = await fetch('http://localhost:8080/api/teacher/forms', {
@@ -187,100 +187,93 @@ function TeacherFormsTab({ forms, fetchForms, showToast }) {
                         </div>
                     </div>
 
-                    <div className="form-builder-card">
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                            <div className="input-group">
-                                <label>Form Title</label>
-                                <input
-                                    type="text"
-                                    placeholder="e.g. Midterm Peer Evaluation"
-                                    value={formTitle}
-                                    onChange={(e) => setFormTitle(e.target.value)}
-                                />
-                            </div>
-                            <div className="input-group">
-                                <label>Submission Deadline (Optional)</label>
-                                <input
-                                    type="datetime-local"
-                                    value={formDeadline}
-                                    onChange={(e) => setFormDeadline(e.target.value)}
-                                />
-                            </div>
+                    <div className="form-builder-card minimal-form">
+                        <div className="minimal-input-group">
+                            <input
+                                type="text"
+                                className="minimal-title-input"
+                                placeholder="Enter Form Title..."
+                                value={formTitle}
+                                onChange={(e) => setFormTitle(e.target.value)}
+                            />
                         </div>
 
-                        <div className="input-group">
-                            <label>Description (Instructions)</label>
+                        <div className="minimal-input-group">
                             <textarea
-                                placeholder="Instructions for students... (What should they focus on?)"
+                                className="minimal-desc-input"
+                                placeholder="Instructions or description for the students..."
                                 value={formDescription}
                                 onChange={(e) => setFormDescription(e.target.value)}
-                                style={{ minHeight: '80px', resize: 'vertical' }}
                             ></textarea>
                         </div>
 
-                        <div className="form-questions-header" style={{ marginTop: '30px', borderBottom: '2px solid #eee', paddingBottom: '10px', marginBottom: '20px' }}>
-                            <h3 style={{ margin: 0, color: '#333' }}>Form Questions</h3>
+                        <div className="minimal-deadline-group">
+                            <label>Submission Deadline (PH Time)</label>
+                            <input
+                                type="datetime-local"
+                                className="minimal-date-input"
+                                value={formDeadline}
+                                onChange={(e) => setFormDeadline(e.target.value)}
+                            />
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <div className="form-questions-header minimal-header">
+                            <h3>Evaluation Criteria</h3>
+                        </div>
+
+                        <div className="minimal-questions-container">
                             {formQuestions.map((q, index) => (
-                                <div className="question-card" key={index} style={{ padding: '15px', backgroundColor: '#fff', border: '1px solid #e0e0e0', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                                    <div className="question-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                                        <h4 style={{ margin: 0, color: '#555', fontSize: '1rem' }}>Question {index + 1}</h4>
+                                <div className="minimal-question-card" key={index}>
+                                    <div className="mq-header">
+                                        <span className="mq-number">{index + 1}</span>
                                         {formQuestions.length > 1 && (
                                             <button
-                                                className="text-button"
-                                                style={{ color: '#d32f2f', padding: '4px 8px', fontSize: '0.85rem' }}
+                                                className="mq-remove-btn text-button"
                                                 onClick={() => setFormQuestions(formQuestions.filter((_, i) => i !== index))}
                                             >
-                                                Remove Question
+                                                ✕
                                             </button>
                                         )}
                                     </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '15px' }}>
-                                        <div className="input-group" style={{ margin: 0 }}>
-                                            <label style={{ fontSize: '0.85rem', color: '#666' }}>Question Prompt</label>
-                                            <input
-                                                type="text"
-                                                placeholder="Enter criteria or question..."
-                                                value={q.questionText}
-                                                onChange={(e) => {
-                                                    const newQuestions = [...formQuestions];
-                                                    newQuestions[index].questionText = e.target.value;
-                                                    setFormQuestions(newQuestions);
-                                                }}
-                                            />
-                                        </div>
-                                        <div className="input-group" style={{ margin: 0 }}>
-                                            <label style={{ fontSize: '0.85rem', color: '#666' }}>Response Format</label>
-                                            <select
-                                                value={q.responseType}
-                                                onChange={(e) => {
-                                                    const newQuestions = [...formQuestions];
-                                                    newQuestions[index].responseType = e.target.value;
-                                                    setFormQuestions(newQuestions);
-                                                }}
-                                            >
-                                                <option value="SCALE">Scale 1-5 Ranking</option>
-                                                <option value="TEXT">Short Text Answer</option>
-                                                <option value="MULTIPLE_CHOICE">Multiple Choice</option>
-                                            </select>
-                                        </div>
+                                    <div className="mq-body">
+                                        <input
+                                            type="text"
+                                            className="mq-prompt-input"
+                                            placeholder="What criteria should the peer evaluate?"
+                                            value={q.questionText}
+                                            onChange={(e) => {
+                                                const newQuestions = [...formQuestions];
+                                                newQuestions[index].questionText = e.target.value;
+                                                setFormQuestions(newQuestions);
+                                            }}
+                                        />
+                                        <select
+                                            className="mq-type-select"
+                                            value={q.responseType}
+                                            onChange={(e) => {
+                                                const newQuestions = [...formQuestions];
+                                                newQuestions[index].responseType = e.target.value;
+                                                setFormQuestions(newQuestions);
+                                            }}
+                                        >
+                                            <option value="SCALE">Scale 1-10</option>
+                                            <option value="TEXT">Short Text Answer</option>
+                                            <option value="MULTIPLE_CHOICE">Multiple Choice</option>
+                                        </select>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        <div className="form-actions" style={{ marginTop: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '20px', borderTop: '1px solid #eee' }}>
+                        <div className="minimal-form-actions">
                             <button
-                                className="action-button outline"
+                                className="minimal-add-btn action-button outline"
                                 onClick={() => setFormQuestions([...formQuestions, { questionText: '', responseType: 'SCALE' }])}
-                                style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
                             >
-                                <span style={{ fontSize: '1.2rem', lineHeight: '1' }}>+</span> Add Another Question
+                                + Add Criterion
                             </button>
-                            <button className="action-button" disabled={isPublishing} style={{ padding: '10px 24px', fontSize: '1rem', backgroundColor: '#0056b3' }} onClick={handlePublishForm}>
-                                Publish Evaluation Form
+                            <button className="minimal-publish-btn action-button" disabled={isPublishing} onClick={handlePublishForm}>
+                                {isPublishing ? 'Publishing...' : 'Publish Form'}
                             </button>
                         </div>
                     </div>
@@ -309,8 +302,8 @@ function TeacherFormsTab({ forms, fetchForms, showToast }) {
                                             <td>
                                                 {form.deadline ? (
                                                     new Date(form.deadline) < new Date() ?
-                                                        <span style={{ color: '#d32f2f', fontWeight: 'bold' }}>Expired ({new Date(form.deadline).toLocaleString()})</span> :
-                                                        <span style={{ color: '#2e7d32' }}>{new Date(form.deadline).toLocaleString()}</span>
+                                                        <span style={{ color: '#d32f2f', fontWeight: 'bold' }}>Expired ({new Date(form.deadline).toLocaleString('en-US', { timeZone: 'Asia/Manila' })} PHT)</span> :
+                                                        <span style={{ color: '#2e7d32' }}>{new Date(form.deadline).toLocaleString('en-US', { timeZone: 'Asia/Manila' })} PHT</span>
                                                 ) : 'No Deadline'}
                                             </td>
                                             <td style={{ textAlign: 'right' }}>

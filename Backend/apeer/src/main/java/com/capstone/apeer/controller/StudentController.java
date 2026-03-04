@@ -67,6 +67,24 @@ public class StudentController {
         return ResponseEntity.ok(groups);
     }
 
+    @GetMapping("/completed-forms/{studentEmail}")
+    public ResponseEntity<List<Long>> getCompletedForms(@PathVariable String studentEmail) {
+        Optional<User> student = userRepository.findByEmail(studentEmail);
+
+        if (student.isEmpty() || !"student".equals(student.get().getRole())) {
+            return ResponseEntity.status(403).build();
+        }
+
+        List<EvaluationResponse> responses = responseRepository.findByEvaluatorId(student.get().getId());
+
+        List<Long> completedFormIds = responses.stream()
+                .map(r -> r.getForm().getId())
+                .distinct()
+                .toList();
+
+        return ResponseEntity.ok(completedFormIds);
+    }
+
     @PostMapping("/evaluations")
     public ResponseEntity<?> submitEvaluation(@RequestBody List<Map<String, Object>> payload) {
         if (payload == null || payload.isEmpty()) {
@@ -93,6 +111,13 @@ public class StudentController {
                 User evaluator = userRepository.findById(evaluatorId).orElse(null);
                 User evaluatee = userRepository.findById(evaluateeId).orElse(null);
                 EvaluationQuestion question = questionRepository.findById(questionId).orElse(null);
+
+                // Check for duplicate submission for this form by this evaluator
+                if (form != null && evaluator != null
+                        && responseRepository.existsByEvaluatorIdAndFormId(evaluator.getId(), form.getId())) {
+                    return ResponseEntity.badRequest()
+                            .body(Map.of("message", "You have already submitted an evaluation for this form."));
+                }
 
                 if (form != null && evaluator != null && evaluatee != null && question != null) {
                     EvaluationResponse response = new EvaluationResponse();

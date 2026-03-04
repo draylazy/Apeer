@@ -4,6 +4,7 @@ import './Dashboard.css';
 function Dashboard({ user, onLogout }) {
     const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'evaluate', 'results'
     const [forms, setForms] = useState([]);
+    const [completedForms, setCompletedForms] = useState([]);
     const [groupMembers, setGroupMembers] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,6 +31,10 @@ function Dashboard({ user, onLogout }) {
             // Fetch active forms
             const formRes = await fetch(`http://localhost:8080/api/student/forms/${user.email}`);
             if (formRes.ok) setForms(await formRes.json());
+
+            // Fetch completed forms
+            const completedRes = await fetch(`http://localhost:8080/api/student/completed-forms/${user.email}`);
+            if (completedRes.ok) setCompletedForms(await completedRes.json());
 
             // Fetch group members
             const groupRes = await fetch(`http://localhost:8080/api/student/group/${user.email}`);
@@ -111,23 +116,29 @@ function Dashboard({ user, onLogout }) {
                     {forms.length === 0 ? <p>No evaluations available.</p> : (
                         forms.map(form => {
                             const isExpired = form.deadline ? new Date(form.deadline) < new Date() : false;
+                            const isCompleted = completedForms.includes(form.id);
+                            const isDisabled = isExpired || isCompleted;
+
                             return (
                                 <div key={form.id} className="dashboard-widget form-card">
                                     <h4>{form.title}</h4>
                                     <p>{form.description}</p>
                                     {form.deadline && (
                                         <p style={{ fontSize: '0.85rem', color: isExpired ? '#d32f2f' : '#666', marginTop: '10px', marginBottom: '15px' }}>
-                                            <strong>Deadline:</strong> {new Date(form.deadline).toLocaleString()}
+                                            <strong>Deadline:</strong> {new Date(form.deadline).toLocaleString('en-US', { timeZone: 'Asia/Manila' })} PHT
                                             {isExpired && " (Expired)"}
                                         </p>
                                     )}
+                                    {isCompleted && (
+                                        <p style={{ fontSize: '0.85rem', color: '#2e7d32', fontWeight: 600, marginTop: '10px', marginBottom: '15px' }}>✓ Completed</p>
+                                    )}
                                     <button
-                                        className={`action-button ${isExpired ? 'secondary-button' : ''}`}
+                                        className={`action-button ${isDisabled ? 'secondary-button' : ''}`}
                                         onClick={() => startEvaluation(form)}
-                                        disabled={isExpired}
-                                        style={isExpired ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+                                        disabled={isDisabled}
+                                        style={isDisabled ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                                     >
-                                        {isExpired ? 'Form Closed' : 'Start form'}
+                                        {isCompleted ? 'Already completed' : (isExpired ? 'Form Closed' : 'Start form')}
                                     </button>
                                 </div>
                             )
@@ -253,7 +264,10 @@ function Dashboard({ user, onLogout }) {
         <div className="dashboard-container">
             <header className="dashboard-header">
                 <div className="header-content">
-                    <h1 className="dashboard-title" onClick={() => setActiveTab('overview')} style={{ cursor: 'pointer' }}>Self and Peer Evaluation System</h1>
+                    <div className="logo-container" onClick={() => setActiveTab('overview')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <img src="/logo.png" alt="SPES Logo" style={{ height: '75px', width: 'auto' }} />
+                        <h1 className="dashboard-title" style={{ margin: 0 }}>Self and Peer Evaluation System</h1>
+                    </div>
                     <div className="user-menu">
                         <span className="welcome-text">Welcome, <strong>{user?.firstName} {user?.lastName}</strong></span>
                         <button onClick={onLogout} className="logout-button">Log Out</button>
